@@ -8,6 +8,7 @@
 - TypeScript
 - Vite
 - Axios
+- Final Form
 - Feature-Sliced Design
 - Vitest и Testing Library
 

@@ -15,12 +15,13 @@ describe('ChatPage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows a validation error when credentials are empty', () => {
+  it('shows a validation error when credentials are empty', async () => {
     render(<ChatPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Войти в чат' }));
 
-    expect(screen.getByText('Заполните idInstance и apiTokenInstance')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Введите idInstance')).toBeInTheDocument());
+    expect(screen.getByText('Введите apiTokenInstance')).toBeInTheDocument();
   });
 
   it('creates a chat from a phone number and sends a text message', async () => {
@@ -33,7 +34,7 @@ describe('ChatPage', () => {
     fireEvent.change(screen.getByLabelText('Новый чат'), { target: { value: '+7 (999) 000-11-22' } });
     fireEvent.click(screen.getByRole('button', { name: 'Создать чат' }));
 
-    expect(screen.getByRole('heading', { name: '+79990001122' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('heading', { name: '+79990001122' })).toBeInTheDocument());
     const composer = screen.getByPlaceholderText('Написать сообщение...');
     fireEvent.change(composer, { target: { value: 'Привет' } });
     fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
@@ -55,6 +56,7 @@ describe('ChatPage', () => {
     await waitFor(() => expect(screen.getByText('Выберите чат')).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText('Новый чат'), { target: { value: '79990001122' } });
     fireEvent.click(screen.getByRole('button', { name: 'Создать чат' }));
+    await waitFor(() => expect(screen.getByPlaceholderText('Написать сообщение...')).toBeInTheDocument());
     fireEvent.change(screen.getByPlaceholderText('Написать сообщение...'), { target: { value: 'Текст' } });
     fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
 

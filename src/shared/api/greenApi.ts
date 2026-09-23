@@ -23,6 +23,7 @@ const getErrorMessage = (error: unknown) => {
   return error instanceof Error ? error.message : 'Неизвестная ошибка запроса';
 };
 
+
 export const sendMessage = async (credentials: GreenCredentials, chatId: string, message: string) => {
   try {
     const response = await axios.post<SendMessageResponse>(
@@ -34,6 +35,7 @@ export const sendMessage = async (credentials: GreenCredentials, chatId: string,
     throw new Error(getErrorMessage(error), { cause: error });
   }
 };
+
 
 export const receiveNotification = async (credentials: GreenCredentials, signal?: AbortSignal) => {
   try {
@@ -49,6 +51,7 @@ export const receiveNotification = async (credentials: GreenCredentials, signal?
     throw new Error(getErrorMessage(error), { cause: error });
   }
 };
+
 
 export const deleteNotification = async (credentials: GreenCredentials, receiptId: number) => {
   try {
