@@ -37,6 +37,15 @@ describe('greenApi', () => {
     vi.spyOn(greenApiClient, 'get').mockResolvedValue({ data: notification });
 
     await expect(receiveNotification(credentials)).resolves.toEqual(notification);
+
+    expect(greenApiClient.get).toHaveBeenCalledWith(
+      'https://api.green-api.com/waInstance12345/receiveNotification/secret-token',
+      {
+        signal: undefined,
+        timeout: 10_000,
+        params: { receiveTimeout: 5 },
+      },
+    );
   });
 
   it('deletes a processed notification by receipt id', async () => {

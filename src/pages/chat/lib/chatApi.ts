@@ -49,7 +49,8 @@ export const sendChatMessageSafely = async (
 const mapNotificationToMessage = (notification: IncomingNotification): IncomingMessage | null => {
   const { body } = notification;
   const chatId = body.senderData?.chatId;
-  const text = body.messageData?.textMessageData?.textMessage;
+  const text = body.messageData?.textMessageData?.textMessage
+    ?? body.messageData?.textMessage;
 
   if (body.typeWebhook !== 'incomingMessageReceived' || !chatId || !text) {
     return null;
@@ -57,7 +58,7 @@ const mapNotificationToMessage = (notification: IncomingNotification): IncomingM
 
   return {
     chatId,
-    id: `incoming-${notification.receiptId}`,
+    id: body.idMessage ?? `incoming-${notification.receiptId}`,
     text,
     createdAt: Date.now(),
   };
@@ -76,7 +77,9 @@ export const startIncomingMessagesPolling = (
       const notification = await receiveNotification(credentials, controller.signal);
       if (notification && !stopped) {
         const message = mapNotificationToMessage(notification);
-        if (message) onMessage(message);
+        if (message) {
+          onMessage(message);
+        }
         await deleteNotification(credentials, notification.receiptId);
       }
     } catch (error) {

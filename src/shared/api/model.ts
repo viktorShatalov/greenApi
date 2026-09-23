@@ -11,8 +11,13 @@ export interface IncomingNotification {
   receiptId: number;
   body: {
     typeWebhook?: string;
+    idMessage?: string;
     senderData?: { chatId?: string };
-    messageData?: { textMessageData?: { textMessage?: string } };
+    messageData?: {
+      typeMessage?: string;
+      textMessage?: string;
+      textMessageData?: { textMessage?: string };
+    };
   };
 }
 

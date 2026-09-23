@@ -51,7 +51,11 @@ export const receiveNotification = async (credentials: GreenCredentials, signal?
   try {
     const response = await runWithGreenApiRateLimit(() => greenApiClient.get<IncomingNotification | null>(
         buildApiUrl(credentials.idInstance, credentials.apiTokenInstance, 'receiveNotification'),
-        { signal, timeout: GREEN_API_TIMEOUT },
+        {
+          signal,
+          timeout: GREEN_API_TIMEOUT,
+          params: { receiveTimeout: 5 },
+        },
       ));
     return response.data;
   } catch (error) {
