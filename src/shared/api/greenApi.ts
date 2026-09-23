@@ -1,11 +1,20 @@
-import axios from 'axios';
 import { buildApiUrl } from '../config/api';
+import axios from 'axios';
+import { runWithGreenApiRateLimit } from './rateLimiter';
+import { GREEN_API_TIMEOUT, greenApiClient } from './httpClient';
 import type {
   GreenApiErrorResponse,
   GreenCredentials,
   IncomingNotification,
   SendMessageResponse,
 } from './model';
+
+export class GreenApiTimeoutError extends Error {
+  constructor(cause: unknown) {
+    super('GREEN-API не ответил на запрос за 10 секунд', { cause });
+    this.name = 'GreenApiTimeoutError';
+  }
+}
 
 const isGreenApiErrorResponse = (value: unknown): value is GreenApiErrorResponse =>
   typeof value === 'object' &&
@@ -26,10 +35,11 @@ const getErrorMessage = (error: unknown) => {
 
 export const sendMessage = async (credentials: GreenCredentials, chatId: string, message: string) => {
   try {
-    const response = await axios.post<SendMessageResponse>(
-      buildApiUrl(credentials.idInstance, credentials.apiTokenInstance, 'sendMessage'),
-      { chatId, message },
-    );
+    const response = await runWithGreenApiRateLimit(() => greenApiClient.post<SendMessageResponse>(
+        buildApiUrl(credentials.idInstance, credentials.apiTokenInstance, 'sendMessage'),
+        { chatId, message },
+        { timeout: GREEN_API_TIMEOUT },
+      ));
     return response.data;
   } catch (error) {
     throw new Error(getErrorMessage(error), { cause: error });
@@ -39,15 +49,20 @@ export const sendMessage = async (credentials: GreenCredentials, chatId: string,
 
 export const receiveNotification = async (credentials: GreenCredentials, signal?: AbortSignal) => {
   try {
-    const response = await axios.get<IncomingNotification | null>(
-      buildApiUrl(credentials.idInstance, credentials.apiTokenInstance, 'receiveNotification'),
-      { signal, timeout: 30000 },
-    );
+    const response = await runWithGreenApiRateLimit(() => greenApiClient.get<IncomingNotification | null>(
+        buildApiUrl(credentials.idInstance, credentials.apiTokenInstance, 'receiveNotification'),
+        { signal, timeout: GREEN_API_TIMEOUT },
+      ));
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error) && (error.code === 'ERR_CANCELED' || error.code === 'ECONNABORTED')) {
+    if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') {
       return null;
     }
+
+    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+      throw new GreenApiTimeoutError(error);
+    }
+
     throw new Error(getErrorMessage(error), { cause: error });
   }
 };
@@ -55,9 +70,10 @@ export const receiveNotification = async (credentials: GreenCredentials, signal?
 
 export const deleteNotification = async (credentials: GreenCredentials, receiptId: number) => {
   try {
-    await axios.delete(
-      `${buildApiUrl(credentials.idInstance, credentials.apiTokenInstance, 'deleteNotification')}/${receiptId}`,
-    );
+    await runWithGreenApiRateLimit(() => greenApiClient.delete(
+        `${buildApiUrl(credentials.idInstance, credentials.apiTokenInstance, 'deleteNotification')}/${receiptId}`,
+        { timeout: GREEN_API_TIMEOUT },
+      ));
   } catch (error) {
     throw new Error(getErrorMessage(error), { cause: error });
   }

@@ -2,6 +2,7 @@ import {
   deleteNotification,
   receiveNotification,
   sendMessage,
+  GreenApiTimeoutError,
 } from '../../../shared/api/greenApi';
 import type { IncomingNotification, GreenCredentials } from '../../../shared/api/model';
 
@@ -81,6 +82,10 @@ export const startIncomingMessagesPolling = (
     } catch (error) {
       if (!stopped) {
         onError(error instanceof Error ? error : new Error('Ошибка получения сообщений'));
+      }
+
+      if (error instanceof GreenApiTimeoutError) {
+        stopped = true;
       }
     } finally {
       if (!stopped) void poll();
